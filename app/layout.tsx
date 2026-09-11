@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     title: "겜줍 (GameJub) - 놓치면 사라지는 이번 주 0원 게임 줍줍 트래커",
     description:
       "스팀, 에픽게임즈, GOG 100% 무료 배포 실시간 올인원 레이더. 지금 0원에 내 라이브러리에 영구 소장하세요!",
-    url: "https://gamejub.kr",
+    url: "https://gamejub.com",
     siteName: "겜줍 (GameJub)",
     locale: "ko_KR",
     type: "website",
