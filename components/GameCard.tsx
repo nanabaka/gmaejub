@@ -12,15 +12,16 @@ import { ExternalLink, Clock, AlertTriangle, Gamepad2 } from 'lucide-react';
 
 interface GameCardProps {
   game: GiveawayGame;
+  exchangeRate?: number;
 }
 
-export const GameCard: React.FC<GameCardProps> = ({ game }) => {
+export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
   const [imgError, setImgError] = useState(false);
 
   const platformInfo = getPlatformBadge(game.platforms);
   const ddayInfo = calculateDDay(game.end_date);
   const worthUsd = parseWorthToUsd(game.worth);
-  const worthKrw = worthUsd > 0 ? formatKrw(worthUsd) : '';
+  const worthKrw = worthUsd > 0 ? formatKrw(worthUsd, exchangeRate) : '';
 
   const imageSrc = game.image || game.thumbnail;
 

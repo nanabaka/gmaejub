@@ -1,9 +1,9 @@
 import { GiveawayGame, PlatformFilter, SortOption } from "@/types/game";
 
-export const USD_TO_KRW_RATE = 1380;
+export const DEFAULT_USD_TO_KRW_RATE = 1380;
 
 /**
- * Extracts numeric USD value from strings like "$19.99" or "N/A"
+ * 정가 문자열("$19.99")에서 순수 숫자 USD 추출
  */
 export function parseWorthToUsd(worth: string | undefined): number {
   if (!worth) return 0;
@@ -12,21 +12,24 @@ export function parseWorthToUsd(worth: string | undefined): number {
 }
 
 /**
- * Formats USD number to Korean Won string
+ * USD를 원화(KRW) 문자열로 환산 (환율 인자 없으면 기본값 사용)
  */
-export function formatKrw(usd: number): string {
-  const krw = Math.round(usd * USD_TO_KRW_RATE);
+export function formatKrw(usd: number, rate: number = DEFAULT_USD_TO_KRW_RATE): string {
+  const krw = Math.round(usd * rate);
   return krw.toLocaleString('ko-KR');
 }
 
 /**
- * Calculates total savings in USD and KRW across all active giveaway games
+ * 실시간 전체 절약 총액 계산 (달러 및 원화)
  */
-export function calculateTotalSavings(games: GiveawayGame[]): { totalUsd: number; totalKrw: string } {
+export function calculateTotalSavings(
+  games: GiveawayGame[],
+  rate: number = DEFAULT_USD_TO_KRW_RATE
+): { totalUsd: number; totalKrw: string } {
   const totalUsd = games.reduce((sum, game) => sum + parseWorthToUsd(game.worth), 0);
   return {
     totalUsd: Math.round(totalUsd),
-    totalKrw: formatKrw(totalUsd),
+    totalKrw: formatKrw(totalUsd, rate),
   };
 }
 
@@ -38,7 +41,7 @@ export interface DDayInfo {
 }
 
 /**
- * Formats end_date to friendly Korean D-Day / remaining time display
+ * end_date 파싱하여 D-Day 및 남은 시간 표시
  */
 export function calculateDDay(endDateStr: string | undefined): DDayInfo {
   if (!endDateStr || endDateStr.trim() === '' || endDateStr.toUpperCase() === 'N/A') {
@@ -49,11 +52,9 @@ export function calculateDDay(endDateStr: string | undefined): DDayInfo {
       rawDiffMs: Infinity,
     };
   }
-
   const normalizedDateStr = endDateStr.includes(' ') ? endDateStr.replace(' ', 'T') : endDateStr;
   const endDate = new Date(normalizedDateStr);
   const now = new Date();
-
   if (isNaN(endDate.getTime())) {
     return {
       label: '한정 수량 / 소진 시 종료',
@@ -62,9 +63,7 @@ export function calculateDDay(endDateStr: string | undefined): DDayInfo {
       rawDiffMs: Infinity,
     };
   }
-
   const diffMs = endDate.getTime() - now.getTime();
-
   if (diffMs <= 0) {
     return {
       label: '배포 마감됨',
@@ -73,11 +72,9 @@ export function calculateDDay(endDateStr: string | undefined): DDayInfo {
       rawDiffMs: 0,
     };
   }
-
   const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
   const days = Math.floor(totalHours / 24);
   const remainingHours = totalHours % 24;
-
   if (days === 0) {
     return {
       label: `마감 임박 (${Math.max(1, totalHours)}시간 남음)`,
@@ -86,7 +83,6 @@ export function calculateDDay(endDateStr: string | undefined): DDayInfo {
       rawDiffMs: diffMs,
     };
   }
-
   return {
     label: `D-${days} (${remainingHours}시간 남음)`,
     isEndingSoon: days <= 2,
@@ -102,11 +98,10 @@ export interface PlatformBadge {
 }
 
 /**
- * Detects platform category and returns label + clean light-mode badge style
+ * 플랫폼 문자열을 분석해 깔끔한 라이트 뱃지 스타일 반환
  */
 export function getPlatformBadge(platforms: string): PlatformBadge {
   const p = (platforms || '').toLowerCase();
-
   if (p.includes('epic')) {
     return {
       platformGroup: 'epic',
@@ -135,7 +130,6 @@ export function getPlatformBadge(platforms: string): PlatformBadge {
       badgeStyle: 'bg-rose-50 text-rose-700 border-rose-200',
     };
   }
-
   const firstToken = platforms.split(',')[0]?.trim() || 'PC';
   return {
     platformGroup: 'indie',
@@ -145,7 +139,7 @@ export function getPlatformBadge(platforms: string): PlatformBadge {
 }
 
 /**
- * Filters and sorts giveaway games based on user controls
+ * 탭 필터링, 검색어, 정렬 로직 적용
  */
 export function filterAndSortGames(
   games: GiveawayGame[],
@@ -154,16 +148,12 @@ export function filterAndSortGames(
   sortBy: SortOption
 ): GiveawayGame[] {
   let result = [...games];
-
-  // Platform filter
   if (platform !== 'all') {
     result = result.filter((game) => {
       const badge = getPlatformBadge(game.platforms);
       return badge.platformGroup === platform;
     });
   }
-
-  // Search filter
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase().trim();
     result = result.filter(
@@ -173,8 +163,6 @@ export function filterAndSortGames(
         game.platforms.toLowerCase().includes(q)
     );
   }
-
-  // Sorting
   result.sort((a, b) => {
     if (sortBy === 'worth') {
       return parseWorthToUsd(b.worth) - parseWorthToUsd(a.worth);
@@ -186,6 +174,5 @@ export function filterAndSortGames(
     }
     return b.id - a.id;
   });
-
   return result;
 }

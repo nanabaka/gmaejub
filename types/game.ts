@@ -18,5 +18,29 @@ export interface GiveawayGame {
 }
 
 export type PlatformFilter = 'all' | 'epic' | 'steam' | 'gog' | 'indie';
-
 export type SortOption = 'newest' | 'worth' | 'ending-soon';
+
+export interface CheapSharkDeal {
+  internalName: string;
+  title: string;
+  dealID: string;
+  storeID: string;
+  gameID: string;
+  salePrice: string;
+  normalPrice: string;
+  savings: string;
+  steamRatingPercent?: string;
+  releaseDate: number;
+  thumb: string;
+}
+
+export interface CheapSharkStore {
+  storeID: string;
+  storeName: string;
+  isActive: number;
+  images: {
+    banner: string;
+    logo: string;
+    icon: string;
+  };
+}

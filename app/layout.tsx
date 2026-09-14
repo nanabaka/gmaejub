@@ -48,7 +48,6 @@ export default function RootLayout({
 }>) {
   const adClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
   const isAdSenseEnabled = Boolean(adClientId && !adClientId.includes('XXXXX'));
-
   return (
     <html lang="ko" className="scroll-smooth">
       <head>
@@ -58,6 +57,9 @@ export default function RootLayout({
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClientId}`}
             crossOrigin="anonymous"
             strategy="afterInteractive"
+            onLoad={() => {
+              window.__adsenseScriptLoaded = true;
+            }}
           />
         )}
       </head>

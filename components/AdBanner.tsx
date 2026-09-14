@@ -11,8 +11,9 @@ interface AdBannerProps {
 
 declare global {
   interface Window {
-    // eslint-disable-next-line @type-fest/no-explicit-any, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     adsbygoogle?: any[];
+    __adsenseScriptLoaded?: boolean;
   }
 }
 
@@ -25,11 +26,27 @@ export const AdBanner: React.FC<AdBannerProps> = ({
 
   useEffect(() => {
     if (!adClientId) return;
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (e) {
-      console.error('AdSense push error:', e);
-    }
+    let cancelled = false;
+    let attempts = 0;
+
+    const tryPush = () => {
+      if (cancelled) return;
+      if (window.__adsenseScriptLoaded || attempts > 20) {
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {
+          console.error('AdSense push error:', e);
+        }
+      } else {
+        attempts++;
+        setTimeout(tryPush, 250);
+      }
+    };
+    tryPush();
+
+    return () => {
+      cancelled = true;
+    };
   }, [adClientId]);
 
   // 애드센스 클라이언트 ID가 등록되지 않은 현재 상태에서는 화면에 아무것도 표시하지 않습니다.
