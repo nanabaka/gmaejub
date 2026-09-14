@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Gamepad2, ShieldCheck, Heart } from 'lucide-react';
+import Link from 'next/link';
+import { Gamepad2, ShieldCheck, Heart, Mail } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -21,6 +22,16 @@ export const Footer: React.FC = () => {
             <p className="text-xs text-gray-500 leading-relaxed">
               놓치면 사라지는 이번 주 0원 게임 줍줍 트래커. 스팀, 에픽게임즈, GOG, 인디 스토어의 100% 무료 배포 게임을 실시간으로 안내합니다.
             </p>
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 mt-2">
+              <Mail className="w-3.5 h-3.5 text-gray-400" />
+              <span>문의: </span>
+              <a
+                href="mailto:contact@gamejub.com"
+                className="font-medium text-gray-700 hover:text-black underline underline-offset-2"
+              >
+                contact@gamejub.com
+              </a>
+            </div>
           </div>
 
           {/* Service Notice */}
@@ -45,13 +56,34 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
-          <p>© {new Date().getFullYear()} 겜줍 (GameJub). All rights reserved.</p>
-          <div className="flex items-center gap-1">
-            <span>Made with</span>
-            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-            <span>for Gamers</span>
+        {/* Policy Links & Bottom Bar */}
+        <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-4 text-xs">
+            <Link
+              href="/privacy"
+              className="hover:text-gray-900 transition-colors font-medium underline underline-offset-2"
+            >
+              개인정보처리방침
+            </Link>
+            <span className="text-gray-300">|</span>
+            <Link
+              href="/terms"
+              className="hover:text-gray-900 transition-colors font-medium underline underline-offset-2"
+            >
+              이용약관
+            </Link>
+            <span className="text-gray-300">|</span>
+            <span className="text-gray-500">문의: contact@gamejub.com</span>
+          </div>
+
+          <div className="flex items-center gap-3 text-gray-400">
+            <p>© {new Date().getFullYear()} 겜줍 (GameJub). All rights reserved.</p>
+            <span className="text-gray-200">|</span>
+            <div className="flex items-center gap-1">
+              <span>Made with</span>
+              <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+              <span>for Gamers</span>
+            </div>
           </div>
         </div>
       </div>

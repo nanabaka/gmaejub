@@ -14,6 +14,7 @@ import { FilterBar } from '@/components/FilterBar';
 import { GameCard } from '@/components/GameCard';
 import { GameCardSkeleton } from '@/components/GameCardSkeleton';
 import { DealCard } from '@/components/DealCard';
+import { FaqSection } from '@/components/FaqSection';
 import { AdBanner } from '@/components/AdBanner';
 import { Footer } from '@/components/Footer';
 import { AlertCircle, RefreshCw, Gamepad2 } from 'lucide-react';
@@ -266,7 +267,10 @@ export default function Home() {
           )}
         </section>
 
-        {/* 6. 하단 광고 슬롯 */}
+        {/* 6. 자주 묻는 질문 (FAQ) 섹션 */}
+        <FaqSection />
+
+        {/* 7. 하단 광고 슬롯 */}
         <AdBanner
           slotId="gamejub-footer-top-slot"
           format="rectangle"
