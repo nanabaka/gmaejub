@@ -33,6 +33,11 @@ export const metadata: Metadata = {
     description:
       "스팀, 에픽게임즈, GOG 100% 무료 배포 실시간 올인원 레이더.",
   },
+  verification: {
+    other: {
+      'naver-site-verification': '9f50a63354d80de41550d85222ad18bd12860fd5',
+    },
+  },
 };
 
 export const viewport: Viewport = {
