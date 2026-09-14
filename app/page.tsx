@@ -1,10 +1,20 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { GiveawayGame, PlatformFilter, SortOption, CheapSharkDeal, CheapSharkStore } from '@/types/game';
+import {
+  GiveawayGame,
+  PlatformFilter,
+  SortOption,
+  GiveawayTypeFilter,
+  GiveawayTypeCount,
+  CheapSharkDeal,
+  CheapSharkStore,
+} from '@/types/game';
 import {
   calculateTotalSavings,
   filterAndSortGames,
+  filterGamesByType,
+  normalizeGiveawayType,
   getPlatformBadge,
 } from '@/utils/formatters';
 import { filterDiscountedGames } from '@/utils/dealFormatters';
@@ -23,6 +33,9 @@ export default function Home() {
   const [games, setGames] = useState<GiveawayGame[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 카테고리 필터 (기본값: 'game' 무료 게임)
+  const [typeFilter, setTypeFilter] = useState<GiveawayTypeFilter>('game');
   const [currentFilter, setCurrentFilter] = useState<PlatformFilter>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -40,7 +53,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // 무료 배포 목록 (CORS 이슈 없는 서버 프록시 사용)
+  // 배포 목록 수집 (CORS 이슈 없는 서버 프록시 사용)
   const fetchGiveaways = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -56,13 +69,13 @@ export default function Home() {
       setGames(json);
     } catch (err) {
       console.error('Failed to load giveaways:', err);
-      setError('실시간 무료 게임 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      setError('실시간 배포 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // 50% 이상 할인 게임 목록
+  // 50% 이상 할인 게임 목록 수집
   const fetchDeals = useCallback(async () => {
     setIsDealsLoading(true);
     try {
@@ -110,45 +123,65 @@ export default function Home() {
     fetchExchangeRate();
   }, [fetchGiveaways, fetchDeals, fetchExchangeRate]);
 
+  // 히어로 배너 및 헤더 통계는 탭 선택과 무관하게 항상 '순수 본편 게임' 기준 (사이트 정체성 유지)
+  const gameOnlyForStats = useMemo(() => filterGamesByType(games, 'game'), [games]);
+
+  const savings = useMemo(() => {
+    return calculateTotalSavings(gameOnlyForStats, exchangeRate);
+  }, [gameOnlyForStats, exchangeRate]);
+
+  // 카테고리별 개수 (게임/DLC·쿠폰/베타)
+  const typeCounts = useMemo((): GiveawayTypeCount => {
+    const counts: GiveawayTypeCount = { game: 0, loot: 0, beta: 0 };
+    games.forEach((g) => {
+      const t = normalizeGiveawayType(g.type);
+      counts[t]++;
+    });
+    return counts;
+  }, [games]);
+
+  // 현재 선택된 카테고리 탭에 해당하는 항목 목록
+  const gamesOfSelectedType = useMemo(
+    () => filterGamesByType(games, typeFilter),
+    [games, typeFilter]
+  );
+
+  // 선택된 카테고리 내에서의 플랫폼별 개수
   const platformCounts = useMemo(() => {
     const counts: Record<PlatformFilter, number> = {
-      all: games.length,
+      all: gamesOfSelectedType.length,
       epic: 0,
       steam: 0,
       gog: 0,
       indie: 0,
     };
-    games.forEach((g) => {
+    gamesOfSelectedType.forEach((g) => {
       const badge = getPlatformBadge(g.platforms);
       if (counts[badge.platformGroup] !== undefined) {
         counts[badge.platformGroup]++;
       }
     });
     return counts;
-  }, [games]);
-
-  const savings = useMemo(() => {
-    return calculateTotalSavings(games, exchangeRate);
-  }, [games, exchangeRate]);
+  }, [gamesOfSelectedType]);
 
   const displayedGames = useMemo(() => {
-    return filterAndSortGames(games, currentFilter, searchQuery, sortBy);
-  }, [games, currentFilter, searchQuery, sortBy]);
+    return filterAndSortGames(gamesOfSelectedType, currentFilter, searchQuery, sortBy);
+  }, [gamesOfSelectedType, currentFilter, searchQuery, sortBy]);
 
   const discountedGames = useMemo(() => filterDiscountedGames(deals, 50), [deals]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 text-gray-900">
-      {/* 1. 헤더 */}
+      {/* 1. 헤더 (순수 게임 개수 전달) */}
       <Header
-        totalCount={games.length}
+        totalCount={gameOnlyForStats.length}
         isLoading={isLoading}
         onRefresh={fetchGiveaways}
       />
       <main className="flex-1">
-        {/* 2. 히어로 배너 */}
+        {/* 2. 히어로 배너 (순수 게임 개수 및 정산액 표기) */}
         <HeroBanner
-          totalCount={games.length}
+          totalCount={gameOnlyForStats.length}
           totalUsd={savings.totalUsd}
           totalKrw={savings.totalKrw}
           isLoading={isLoading}
@@ -159,7 +192,7 @@ export default function Home() {
           format="horizontal"
           label="스폰서 / 추천 배너"
         />
-        {/* 4. 필터 바 */}
+        {/* 4. 필터 바 (카테고리 탭 + 플랫폼 탭 + 검색/정렬) */}
         <FilterBar
           currentFilter={currentFilter}
           onFilterChange={setCurrentFilter}
@@ -168,13 +201,22 @@ export default function Home() {
           onSearchChange={setSearchQuery}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          currentType={typeFilter}
+          onTypeChange={setTypeFilter}
+          typeCounts={typeCounts}
         />
-        {/* 5. 무료 게임 카드 그리드 */}
+        {/* 5. 0원 줍줍 라인업 그리드 */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                <span>0원 줍줍 라인업</span>
+                <span>
+                  {typeFilter === 'game'
+                    ? '0원 줍줍 라인업'
+                    : typeFilter === 'loot'
+                    ? 'DLC · 쿠폰 모음'
+                    : '베타 · 얼리 액세스'}
+                </span>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
                   {isLoading ? '...' : `${displayedGames.length}개`}
                 </span>
@@ -210,9 +252,9 @@ export default function Home() {
           {!isLoading && !error && displayedGames.length === 0 && (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-gray-200 text-center max-w-md mx-auto my-10 shadow-xs">
               <Gamepad2 className="w-10 h-10 text-gray-300 mb-2" />
-              <h3 className="text-sm font-bold text-gray-900 mb-1">조건에 맞는 게임이 없습니다</h3>
+              <h3 className="text-sm font-bold text-gray-900 mb-1">조건에 맞는 항목이 없습니다</h3>
               <p className="text-xs text-gray-500 mb-5">
-                선택한 필터 또는 검색어에 해당하는 0원 게임이 현재 없습니다.
+                선택한 필터 또는 검색어에 해당하는 배포 항목이 현재 없습니다.
               </p>
               <button
                 onClick={() => {
@@ -277,7 +319,7 @@ export default function Home() {
           label="하단 디스플레이 배너"
         />
       </main>
-      {/* 7. 푸터 */}
+      {/* 8. 푸터 */}
       <Footer />
     </div>
   );

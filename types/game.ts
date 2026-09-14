@@ -20,6 +20,15 @@ export interface GiveawayGame {
 export type PlatformFilter = 'all' | 'epic' | 'steam' | 'gog' | 'indie';
 export type SortOption = 'newest' | 'worth' | 'ending-soon';
 
+// '전체' 없이 세 카테고리 탭만 — 기본값은 'game'
+export type GiveawayTypeFilter = 'game' | 'loot' | 'beta';
+
+export interface GiveawayTypeCount {
+  game: number;
+  loot: number;
+  beta: number;
+}
+
 export interface CheapSharkDeal {
   internalName: string;
   title: string;

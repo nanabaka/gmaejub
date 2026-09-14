@@ -5,6 +5,7 @@ import { GiveawayGame } from '@/types/game';
 import {
   calculateDDay,
   getPlatformBadge,
+  getGiveawayTypeBadge,
   parseWorthToUsd,
   formatKrw,
 } from '@/utils/formatters';
@@ -19,6 +20,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
   const [imgError, setImgError] = useState(false);
 
   const platformInfo = getPlatformBadge(game.platforms);
+  const typeInfo = getGiveawayTypeBadge(game.type);
   const ddayInfo = calculateDDay(game.end_date);
   const worthUsd = parseWorthToUsd(game.worth);
   const worthKrw = worthUsd > 0 ? formatKrw(worthUsd, exchangeRate) : '';
@@ -56,10 +58,10 @@ export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
           </span>
         </div>
 
-        {/* 100% OFF Tag (Top Right) */}
+        {/* Category Badge (Top Right: 100% OFF / 무료 증정 / 베타 참가권) */}
         <div className="absolute top-2.5 right-2.5 z-10">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-gray-900 text-white shadow-2xs">
-            100% OFF
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold shadow-2xs ${typeInfo.style}`}>
+            {typeInfo.label}
           </span>
         </div>
 

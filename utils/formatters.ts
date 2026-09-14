@@ -1,4 +1,4 @@
-import { GiveawayGame, PlatformFilter, SortOption } from "@/types/game";
+import { GiveawayGame, PlatformFilter, SortOption, GiveawayTypeFilter } from "@/types/game";
 
 export const DEFAULT_USD_TO_KRW_RATE = 1380;
 
@@ -176,3 +176,39 @@ export function filterAndSortGames(
   });
   return result;
 }
+
+/**
+ * GamerPower의 type 필드를 3대 카테고리로 정규화
+ */
+export function normalizeGiveawayType(rawType: string): 'game' | 'loot' | 'beta' {
+  const t = (rawType || '').toLowerCase();
+  if (t.includes('beta') || t.includes('early access')) return 'beta';
+  if (t.includes('game')) return 'game';
+  return 'loot'; // DLC, Other 등 나머지 전부
+}
+
+/**
+ * 카드 코너에 표시할 카테고리 뱃지 정보
+ */
+export function getGiveawayTypeBadge(rawType: string): { label: string; style: string } {
+  const norm = normalizeGiveawayType(rawType);
+  switch (norm) {
+    case 'game':
+      return { label: '100% OFF', style: 'bg-gray-900 text-white' };
+    case 'loot':
+      return { label: '무료 증정', style: 'bg-indigo-600 text-white' };
+    case 'beta':
+      return { label: '베타 참가권', style: 'bg-amber-600 text-white' };
+  }
+}
+
+/**
+ * 카테고리(게임/DLC·쿠폰/베타)로 1차 필터링
+ */
+export function filterGamesByType(
+  games: GiveawayGame[],
+  typeFilter: GiveawayTypeFilter
+): GiveawayGame[] {
+  return games.filter((g) => normalizeGiveawayType(g.type) === typeFilter);
+}
+
