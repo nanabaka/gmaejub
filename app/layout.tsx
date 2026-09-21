@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.gamejub.com"),
   title: "겜줍 (GameJub) - 놓치면 사라지는 이번 주 0원 게임 줍줍 트래커",
   description:
     "스팀(Steam), 에픽게임즈(Epic Games), GOG 정기·게릴라 100% 무료 배포 실시간 올인원 레이더. 기간 한정 무료 게임을 라이브러리에 영구 소장하세요!",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     title: "겜줍 (GameJub) - 놓치면 사라지는 이번 주 0원 게임 줍줍 트래커",
     description:
       "스팀, 에픽게임즈, GOG 100% 무료 배포 실시간 올인원 레이더. 지금 0원에 내 라이브러리에 영구 소장하세요!",
-    url: "https://gamejub.com",
+    url: "https://www.gamejub.com",
     siteName: "겜줍 (GameJub)",
     locale: "ko_KR",
     type: "website",
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
   },
   verification: {
     other: {
-      'naver-site-verification': '9f50a63354d80de41550d85222ad18bd12860fd5',
+      'naver-site-verification': '98b7313eb350843517dc99ca6f06970d31db4a1c',
     },
   },
 };
