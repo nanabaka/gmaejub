@@ -1,21 +1,9 @@
 import { NextResponse } from 'next/server';
+import { fetchGiveaways } from '@/utils/gameData';
 
 export async function GET() {
   try {
-    // ?type=game 제거 → 본편 게임 + DLC + 쿠폰 + 베타키 전체 수집 (약 100개)
-    const response = await fetch('https://www.gamerpower.com/api/giveaways', {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'GameJub/1.0',
-      },
-      next: { revalidate: 300 }, // 5 minutes cache
-    });
-
-    if (!response.ok) {
-      throw new Error(`GamerPower API responded with status ${response.status}`);
-    }
-
-    const data = await response.json();
+    const data = await fetchGiveaways();
     return NextResponse.json(data, {
       headers: {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',

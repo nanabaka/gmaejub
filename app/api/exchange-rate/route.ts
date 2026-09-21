@@ -1,24 +1,11 @@
 import { NextResponse } from 'next/server';
+import { fetchExchangeRate } from '@/utils/gameData';
 
 export const revalidate = 86400; // 24시간 캐시
 
 export async function GET() {
   try {
-    const response = await fetch('https://open.er-api.com/v6/latest/USD', {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'GameJub/1.0 (https://gamejub.com)',
-      },
-      next: { revalidate: 86400 },
-    });
-    if (!response.ok) {
-      throw new Error(`Exchange rate API responded with status ${response.status}`);
-    }
-    const data = await response.json();
-    const rate = data?.rates?.KRW;
-    if (typeof rate !== 'number') {
-      throw new Error('Invalid exchange rate response');
-    }
+    const rate = await fetchExchangeRate();
     return NextResponse.json(
       { rate },
       {

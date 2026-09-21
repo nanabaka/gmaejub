@@ -1,20 +1,11 @@
 import { NextResponse } from 'next/server';
+import { fetchStores } from '@/utils/gameData';
 
 export const revalidate = 86400; // 24시간 캐시
 
 export async function GET() {
   try {
-    const response = await fetch('https://www.cheapshark.com/api/1.0/stores', {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'GameJub/1.0 (https://gamejub.com)',
-      },
-      next: { revalidate: 86400 },
-    });
-    if (!response.ok) {
-      throw new Error(`CheapShark stores API responded with status ${response.status}`);
-    }
-    const stores = await response.json();
+    const stores = await fetchStores();
     return NextResponse.json(stores, {
       headers: {
         'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=172800',
