@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ExternalLink, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Clock, AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AdBanner } from '@/components/AdBanner';
@@ -10,11 +10,13 @@ import {
   calculateDDay,
   getPlatformBadge,
   getGiveawayTypeBadge,
+  normalizeGiveawayType,
   parseWorthToUsd,
   formatKrw,
   getGameSlug,
   parseGameIdFromSlug,
 } from '@/utils/formatters';
+import { getClaimGuide } from '@/utils/platformGuides';
 import type { GiveawayGame } from '@/types/game';
 
 interface PageProps {
@@ -76,6 +78,7 @@ export default async function GameDetailPage({ params }: PageProps) {
   const worthUsd = parseWorthToUsd(game.worth);
   const worthKrw = worthUsd > 0 ? formatKrw(worthUsd) : '';
   const claimUrl = game.open_giveaway_url || game.gamerpower_url;
+  const claimGuide = getClaimGuide(platformInfo.platformGroup, normalizeGiveawayType(game.type));
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 text-gray-900">
@@ -159,9 +162,25 @@ export default async function GameDetailPage({ params }: PageProps) {
               </div>
             </div>
 
+            <div className="mb-6 bg-gray-50 border border-gray-100 rounded-xl p-4 sm:p-5">
+              <h2 className="text-sm font-bold text-gray-900 mb-3">{claimGuide.title}</h2>
+              <ol className="space-y-2 mb-3">
+                {claimGuide.steps.map((step, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 leading-relaxed">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <div className="flex items-start gap-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                <span>{claimGuide.tip}</span>
+              </div>
+            </div>
+
             {game.instructions && (
               <div className="mb-6">
-                <h2 className="text-sm font-bold text-gray-900 mb-2">참여 방법</h2>
+                <h2 className="text-sm font-bold text-gray-900 mb-2">배포처 제공 추가 안내</h2>
                 <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">
                   {game.instructions}
                 </p>
