@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { GiveawayGame } from '@/types/game';
 import {
   calculateDDay,
@@ -8,6 +9,7 @@ import {
   getGiveawayTypeBadge,
   parseWorthToUsd,
   formatKrw,
+  getGameSlug,
 } from '@/utils/formatters';
 import { ExternalLink, Clock, AlertTriangle, Gamepad2 } from 'lucide-react';
 
@@ -26,11 +28,12 @@ export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
   const worthKrw = worthUsd > 0 ? formatKrw(worthUsd, exchangeRate) : '';
 
   const imageSrc = game.image || game.thumbnail;
+  const detailHref = `/game/${getGameSlug(game)}`;
 
   return (
     <div className="group flex flex-col justify-between bg-white border border-gray-200 hover:border-gray-300 rounded-xl overflow-hidden clean-card">
       {/* Top Media Area */}
-      <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
+      <Link href={detailHref} className="relative w-full aspect-video overflow-hidden bg-gray-100 block">
         {!imgError && imageSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -84,17 +87,20 @@ export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
             <span>{ddayInfo.label}</span>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Card Body */}
       <div className="p-4 flex flex-col flex-1 justify-between">
         <div>
           {/* Title */}
-          <h2
-            className="text-sm sm:text-base font-bold text-gray-900 group-hover:text-gray-700 transition-colors line-clamp-1 mb-1"
-            title={game.title}
-          >
-            {game.title}
+          <h2 className="mb-1">
+            <Link
+              href={detailHref}
+              className="text-sm sm:text-base font-bold text-gray-900 group-hover:text-gray-700 transition-colors line-clamp-1 block"
+              title={game.title}
+            >
+              {game.title}
+            </Link>
           </h2>
 
           {/* Description */}

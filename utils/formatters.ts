@@ -212,3 +212,31 @@ export function filterGamesByType(
   return games.filter((g) => normalizeGiveawayType(g.type) === typeFilter);
 }
 
+/**
+ * 게임 상세 페이지 URL용 슬러그 변환
+ */
+export function slugify(text: string): string {
+  return (text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+/**
+ * `/game/[slug]` 라우트에서 쓰는 "id-제목" 형태의 슬러그 생성
+ */
+export function getGameSlug(game: Pick<GiveawayGame, 'id' | 'title'>): string {
+  const slug = slugify(game.title);
+  return slug ? `${game.id}-${slug}` : `${game.id}`;
+}
+
+/**
+ * 슬러그 맨 앞의 숫자 id 추출 (제목 부분이 바뀌어도 조회 가능하도록)
+ */
+export function parseGameIdFromSlug(slug: string): number | null {
+  const match = slug.match(/^\d+/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
