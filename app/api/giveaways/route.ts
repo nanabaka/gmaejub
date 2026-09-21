@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   try {
     // ?type=game 제거 → 본편 게임 + DLC + 쿠폰 + 베타키 전체 수집 (약 100개)
