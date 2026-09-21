@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Clock, AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react';
 import { Header } from '@/components/Header';
@@ -96,12 +97,16 @@ export default async function GameDetailPage({ params }: PageProps) {
 
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs">
           {game.image && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={game.image}
-              alt={game.title}
-              className="w-full aspect-video object-cover bg-gray-100"
-            />
+            <div className="relative w-full aspect-video bg-gray-100">
+              <Image
+                src={game.image}
+                alt={game.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
+                priority
+                className="object-cover"
+              />
+            </div>
           )}
 
           <div className="p-6 sm:p-8">

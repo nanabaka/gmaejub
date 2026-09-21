@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { GiveawayGame } from '@/types/game';
 import {
   calculateDDay,
@@ -35,13 +36,13 @@ export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
       {/* Top Media Area */}
       <Link href={detailHref} className="relative w-full aspect-video overflow-hidden bg-gray-100 block">
         {!imgError && imageSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={imageSrc}
             alt={game.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             onError={() => setImgError(true)}
-            loading="lazy"
-            className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-300 ease-out"
+            className="object-cover object-center group-hover:scale-102 transition-transform duration-300 ease-out"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400 p-4">
