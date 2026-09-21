@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -54,6 +55,10 @@ export default function RootLayout({
 }>) {
   const adClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
   const isAdSenseEnabled = Boolean(adClientId && !adClientId.includes('XXXXX'));
+
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const isGaEnabled = Boolean(gaMeasurementId && !gaMeasurementId.includes('XXXXX'));
+
   return (
     <html lang="ko" className="scroll-smooth">
       <head>
@@ -72,6 +77,7 @@ export default function RootLayout({
       <body className="bg-gray-50 text-gray-900 min-h-screen antialiased selection:bg-gray-200 selection:text-gray-900">
         {children}
       </body>
+      {isGaEnabled && <GoogleAnalytics gaId={gaMeasurementId!} />}
     </html>
   );
 }
