@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Gamepad2, ShieldCheck, Heart, Mail } from 'lucide-react';
+import { PLATFORM_HUBS } from '@/utils/platformGuides';
 
 export const Footer: React.FC = () => {
   return (
@@ -55,6 +56,23 @@ export const Footer: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {/* Platform Hub Links */}
+        <nav
+          aria-label="플랫폼별 무료 게임"
+          className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs"
+        >
+          <span className="font-bold text-gray-700">플랫폼별 무료 게임</span>
+          {PLATFORM_HUBS.map((hub) => (
+            <Link
+              key={hub.slug}
+              href={`/free/${hub.slug}`}
+              className="text-gray-600 hover:text-gray-900 transition-colors underline underline-offset-2"
+            >
+              {hub.name}
+            </Link>
+          ))}
+        </nav>
 
         {/* Policy Links & Bottom Bar */}
         <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">

@@ -9,6 +9,7 @@ import { AdBanner } from '@/components/AdBanner';
 import { fetchGiveaways } from '@/utils/gameData';
 import {
   calculateDDay,
+  cleanGameTitle,
   getPlatformBadge,
   getGiveawayTypeBadge,
   normalizeGiveawayType,
@@ -17,18 +18,26 @@ import {
   getGameSlug,
   parseGameIdFromSlug,
 } from '@/utils/formatters';
-import { getClaimGuide } from '@/utils/platformGuides';
+import { PLATFORM_HUBS, getClaimGuide } from '@/utils/platformGuides';
 import type { GiveawayGame } from '@/types/game';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+const TYPE_NOUN = { game: '게임', loot: 'DLC·아이템', beta: '베타 참가권' } as const;
+
 async function getGame(slug: string): Promise<GiveawayGame | null> {
   const id = parseGameIdFromSlug(slug);
   if (id === null) return null;
   const games = await fetchGiveaways();
   return games.find((g) => g.id === id) ?? null;
+}
+
+function parseEndDate(endDate: string | undefined): Date | null {
+  if (!endDate || endDate.toUpperCase() === 'N/A') return null;
+  const d = new Date(endDate.replace(' ', 'T'));
+  return isNaN(d.getTime()) ? null : d;
 }
 
 export async function generateStaticParams() {
@@ -48,9 +57,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: '배포가 종료된 게임입니다 - 겜줍 (GameJub)' };
   }
 
-  const title = `${game.title} 무료 다운로드 받는 법 - 겜줍 (GameJub)`;
-  const description =
-    (game.description || `${game.title} 기간 한정 100% 무료 배포 중입니다.`).slice(0, 150);
+  const name = cleanGameTitle(game.title);
+  const platformLabel = getPlatformBadge(game.platforms).label;
+  const noun = TYPE_NOUN[normalizeGiveawayType(game.type)];
+  const worthUsd = parseWorthToUsd(game.worth);
+  const worthText = worthUsd > 0 ? `정가 ${game.worth}(약 ${formatKrw(worthUsd)}원) 상당의 ` : '';
+
+  const title = `${name} 무료 받는 법 (${platformLabel} Free Giveaway) - 겜줍 (GameJub)`;
+  const description = `${name} ${platformLabel} 무료 배포 정보. ${worthText}${noun}을 0원에 받는 방법과 마감 시점을 단계별로 안내합니다.`;
 
   return {
     title,
@@ -80,9 +94,46 @@ export default async function GameDetailPage({ params }: PageProps) {
   const worthKrw = worthUsd > 0 ? formatKrw(worthUsd) : '';
   const claimUrl = game.open_giveaway_url || game.gamerpower_url;
   const claimGuide = getClaimGuide(platformInfo.platformGroup, normalizeGiveawayType(game.type));
+  const name = cleanGameTitle(game.title);
+  const canonicalUrl = `https://www.gamejub.com/game/${getGameSlug(game)}`;
+  const hub = PLATFORM_HUBS.find((h) => h.group === platformInfo.platformGroup);
+
+  const allGames = await fetchGiveaways();
+  const relatedGames = allGames
+    .filter(
+      (g) =>
+        g.id !== game.id && getPlatformBadge(g.platforms).platformGroup === platformInfo.platformGroup
+    )
+    .sort((a, b) => {
+      const aIsGame = normalizeGiveawayType(a.type) === 'game' ? 0 : 1;
+      const bIsGame = normalizeGiveawayType(b.type) === 'game' ? 0 : 1;
+      return aIsGame - bIsGame || b.id - a.id;
+    })
+    .slice(0, 6);
+
+  const endDate = parseEndDate(game.end_date);
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name,
+    description: `${name} ${platformInfo.label} 무료 배포`,
+    ...(game.image ? { image: [game.image] } : {}),
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      url: canonicalUrl,
+      ...(endDate ? { priceValidUntil: endDate.toISOString().slice(0, 10) } : {}),
+    },
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 text-gray-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+      />
       <Header />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-10">
         <div className="mb-6">
@@ -138,7 +189,7 @@ export default async function GameDetailPage({ params }: PageProps) {
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-2 tracking-tight">
-              {game.title}
+              {name} 무료 받는 법
             </h1>
             <p className="text-sm text-gray-500 mb-6 leading-relaxed whitespace-pre-line">
               {game.description || '기간 한정 100% 무료 배포 게임입니다.'}
@@ -203,6 +254,38 @@ export default async function GameDetailPage({ params }: PageProps) {
             </a>
           </div>
         </div>
+
+        {(hub || relatedGames.length > 0) && (
+          <section className="mt-8 bg-white border border-gray-200 rounded-2xl p-6 shadow-xs">
+            {relatedGames.length > 0 && (
+              <>
+                <h2 className="text-sm font-bold text-gray-900 mb-3">
+                  {platformInfo.label}의 다른 무료 게임
+                </h2>
+                <ul className="space-y-2 mb-4">
+                  {relatedGames.map((g) => (
+                    <li key={g.id}>
+                      <Link
+                        href={`/game/${getGameSlug(g)}`}
+                        className="text-sm text-gray-700 hover:text-black underline underline-offset-2"
+                      >
+                        {cleanGameTitle(g.title)}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {hub && (
+              <Link
+                href={`/free/${hub.slug}`}
+                className="inline-flex items-center text-sm font-semibold text-gray-900 hover:underline"
+              >
+                {hub.name} 무료 게임 전체 보기 →
+              </Link>
+            )}
+          </section>
+        )}
 
         <div className="mt-8">
           <AdBanner

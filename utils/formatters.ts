@@ -213,6 +213,17 @@ export function filterGamesByType(
 }
 
 /**
+ * 원본 제목의 "(Steam) Giveaway", "Key Giveaway" 같은 꼬리표를 떼고 게임 이름만 남김
+ */
+export function cleanGameTitle(title: string): string {
+  const cleaned = (title || '')
+    .replace(/\s*\([^)]*\)\s*(Key\s+)?Giveaway\s*$/i, '')
+    .replace(/\s+(Key\s+)?Giveaway\s*$/i, '')
+    .trim();
+  return cleaned || title;
+}
+
+/**
  * 게임 상세 페이지 URL용 슬러그 변환
  */
 export function slugify(text: string): string {
