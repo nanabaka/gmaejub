@@ -114,6 +114,23 @@ export const PLATFORM_HUBS: PlatformHub[] = [
   },
 ];
 
+const SLUG_PLATFORM_TO_HUB: Record<string, string> = {
+  'epic-games': 'epic',
+  epic: 'epic',
+  steam: 'steam',
+  gog: 'gog',
+  itchio: 'indie',
+  'itch-io': 'indie',
+  indiegala: 'indie',
+};
+
+// 종료된 게임 슬러그 끝의 "-steam-giveaway", "-epic-games-key-giveaway" 같은 꼬리표로 플랫폼 허브를 추정
+export function inferHubPathFromSlug(slug: string): string {
+  const match = slug.toLowerCase().match(/-(epic-games|epic|steam|gog|itchio|itch-io|indiegala)(?:-key)?-giveaway$/);
+  const hubSlug = match ? SLUG_PLATFORM_TO_HUB[match[1]] : undefined;
+  return hubSlug ? `/free/${hubSlug}` : '/';
+}
+
 export function getPlatformHub(slug: string): PlatformHub | undefined {
   return PLATFORM_HUBS.find((hub) => hub.slug === slug);
 }

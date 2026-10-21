@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Clock, AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -18,7 +18,7 @@ import {
   getGameSlug,
   parseGameIdFromSlug,
 } from '@/utils/formatters';
-import { PLATFORM_HUBS, getClaimGuide } from '@/utils/platformGuides';
+import { PLATFORM_HUBS, getClaimGuide, inferHubPathFromSlug } from '@/utils/platformGuides';
 import type { GiveawayGame } from '@/types/game';
 
 interface PageProps {
@@ -81,9 +81,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function GameDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const game = await getGame(slug);
+  const id = parseGameIdFromSlug(slug);
+  if (id === null) notFound();
+
+  const allGames = await fetchGiveaways();
+  const game = allGames.find((g) => g.id === id);
 
   if (!game) {
+    // 이미 종료된 배포(현재 최신 id보다 작은 id)는 같은 플랫폼 허브로 보내 이탈을 줄임
+    const maxId = allGames.reduce((max, g) => Math.max(max, g.id), 0);
+    if (allGames.length > 0 && id < maxId) {
+      permanentRedirect(inferHubPathFromSlug(slug));
+    }
     notFound();
   }
 
@@ -98,7 +107,6 @@ export default async function GameDetailPage({ params }: PageProps) {
   const canonicalUrl = `https://www.gamejub.com/game/${getGameSlug(game)}`;
   const hub = PLATFORM_HUBS.find((h) => h.group === platformInfo.platformGroup);
 
-  const allGames = await fetchGiveaways();
   const relatedGames = allGames
     .filter(
       (g) =>
