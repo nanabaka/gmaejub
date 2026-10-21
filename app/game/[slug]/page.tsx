@@ -18,7 +18,8 @@ import {
   getGameSlug,
   parseGameIdFromSlug,
 } from '@/utils/formatters';
-import { PLATFORM_HUBS, getClaimGuide, inferHubPathFromSlug } from '@/utils/platformGuides';
+import { PLATFORM_HUBS, inferHubPathFromSlug } from '@/utils/platformGuides';
+import { getAccessNotice, getDeviceKind, getGuideForGame } from '@/utils/claimInfo';
 import type { GiveawayGame } from '@/types/game';
 
 interface PageProps {
@@ -102,7 +103,9 @@ export default async function GameDetailPage({ params }: PageProps) {
   const worthUsd = parseWorthToUsd(game.worth);
   const worthKrw = worthUsd > 0 ? formatKrw(worthUsd) : '';
   const claimUrl = game.open_giveaway_url || game.gamerpower_url;
-  const claimGuide = getClaimGuide(platformInfo.platformGroup, normalizeGiveawayType(game.type));
+  const claimGuide = getGuideForGame(game, platformInfo.platformGroup, normalizeGiveawayType(game.type));
+  const device = getDeviceKind(game.platforms);
+  const accessNotice = getAccessNotice(game);
   const name = cleanGameTitle(game.title);
   const canonicalUrl = `https://www.gamejub.com/game/${getGameSlug(game)}`;
   const hub = PLATFORM_HUBS.find((h) => h.group === platformInfo.platformGroup);
@@ -110,7 +113,9 @@ export default async function GameDetailPage({ params }: PageProps) {
   const relatedGames = allGames
     .filter(
       (g) =>
-        g.id !== game.id && getPlatformBadge(g.platforms).platformGroup === platformInfo.platformGroup
+        g.id !== game.id &&
+        getDeviceKind(g.platforms) === 'pc' &&
+        getPlatformBadge(g.platforms).platformGroup === platformInfo.platformGroup
     )
     .sort((a, b) => {
       const aIsGame = normalizeGiveawayType(a.type) === 'game' ? 0 : 1;
@@ -226,6 +231,17 @@ export default async function GameDetailPage({ params }: PageProps) {
               </div>
             </div>
 
+            {device !== 'pc' && (
+              <div className="mb-6 flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                <span>
+                  {device === 'mobile'
+                    ? 'PC에서는 받을 수 없는 모바일(Android/iOS) 전용 배포입니다.'
+                    : 'VR 기기 전용 배포입니다. 일반 PC 플레이용이 아니에요.'}
+                </span>
+              </div>
+            )}
+
             <div className="mb-6 bg-gray-50 border border-gray-100 rounded-xl p-4 sm:p-5">
               <h2 className="text-sm font-bold text-gray-900 mb-3">{claimGuide.title}</h2>
               <ol className="space-y-2 mb-3">
@@ -248,6 +264,12 @@ export default async function GameDetailPage({ params }: PageProps) {
                 <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">
                   {game.instructions}
                 </p>
+              </div>
+            )}
+
+            {accessNotice && (
+              <div className="mb-3 text-xs text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                {accessNotice.note}
               </div>
             )}
 

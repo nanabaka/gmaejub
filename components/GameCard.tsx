@@ -12,6 +12,7 @@ import {
   formatKrw,
   getGameSlug,
 } from '@/utils/formatters';
+import { DEVICE_LABEL, getAccessNotice, getDeviceKind } from '@/utils/claimInfo';
 import { ExternalLink, Clock, AlertTriangle, Gamepad2 } from 'lucide-react';
 
 interface GameCardProps {
@@ -30,6 +31,8 @@ export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
 
   const imageSrc = game.image || game.thumbnail;
   const detailHref = `/game/${getGameSlug(game)}`;
+  const device = getDeviceKind(game.platforms);
+  const accessNotice = getAccessNotice(game);
 
   return (
     <div className="group flex flex-col justify-between bg-white border border-gray-200 hover:border-gray-300 rounded-xl overflow-hidden clean-card">
@@ -56,9 +59,13 @@ export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
         {/* Platform Badge (Top Left) */}
         <div className="absolute top-2.5 left-2.5 z-10">
           <span
-            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border shadow-2xs ${platformInfo.badgeStyle}`}
+            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border shadow-2xs ${
+              device === 'pc'
+                ? platformInfo.badgeStyle
+                : 'bg-amber-50 text-amber-800 border-amber-200'
+            }`}
           >
-            {platformInfo.label}
+            {device === 'pc' ? platformInfo.label : DEVICE_LABEL[device]}
           </span>
         </div>
 
@@ -151,6 +158,9 @@ export const GameCard: React.FC<GameCardProps> = ({ game, exchangeRate }) => {
             <span>0원에 줍줍하기</span>
             <ExternalLink className="w-3.5 h-3.5 text-gray-300" />
           </a>
+          {accessNotice?.short && (
+            <p className="mt-1.5 text-[10px] text-gray-400 text-center">{accessNotice.short}</p>
+          )}
         </div>
       </div>
     </div>

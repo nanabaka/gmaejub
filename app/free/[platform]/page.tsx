@@ -8,6 +8,7 @@ import { GameCard } from '@/components/GameCard';
 import { fetchExchangeRate, fetchGiveaways } from '@/utils/gameData';
 import { getPlatformBadge, normalizeGiveawayType } from '@/utils/formatters';
 import { PLATFORM_HUBS, getClaimGuide, getPlatformHub } from '@/utils/platformGuides';
+import { getDeviceKind } from '@/utils/claimInfo';
 
 interface PageProps {
   params: Promise<{ platform: string }>;
@@ -49,7 +50,11 @@ export default async function PlatformHubPage({ params }: PageProps) {
   const exchangeRate = rateResult.status === 'fulfilled' ? rateResult.value : undefined;
 
   const games = allGames
-    .filter((g) => getPlatformBadge(g.platforms).platformGroup === hub.group)
+    .filter(
+      (g) =>
+        getDeviceKind(g.platforms) === 'pc' &&
+        getPlatformBadge(g.platforms).platformGroup === hub.group
+    )
     .sort((a, b) => {
       const aIsGame = normalizeGiveawayType(a.type) === 'game' ? 0 : 1;
       const bIsGame = normalizeGiveawayType(b.type) === 'game' ? 0 : 1;
