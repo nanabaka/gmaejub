@@ -135,11 +135,15 @@ export function getPlatformHub(slug: string): PlatformHub | undefined {
   return PLATFORM_HUBS.find((hub) => hub.slug === slug);
 }
 
+export function withTypeNote(guide: ClaimGuide, giveawayType: GiveawayTypeFilter): ClaimGuide {
+  const extraNote = TYPE_NOTES[giveawayType];
+  return extraNote ? { ...guide, tip: `${guide.tip} ${extraNote}` } : guide;
+}
+
 export function getClaimGuide(
   platformGroup: PlatformFilter,
   giveawayType: GiveawayTypeFilter
 ): ClaimGuide {
   const base = PLATFORM_GUIDES[platformGroup === 'all' ? 'indie' : platformGroup];
-  const extraNote = TYPE_NOTES[giveawayType];
-  return extraNote ? { ...base, tip: `${base.tip} ${extraNote}` } : base;
+  return withTypeNote(base, giveawayType);
 }

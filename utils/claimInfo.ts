@@ -1,5 +1,5 @@
 import type { GiveawayGame, GiveawayTypeFilter, PlatformFilter } from '@/types/game';
-import { getClaimGuide, type ClaimGuide } from '@/utils/platformGuides';
+import { getClaimGuide, withTypeNote, type ClaimGuide } from '@/utils/platformGuides';
 
 export type DeviceKind = 'pc' | 'mobile' | 'vr';
 
@@ -92,6 +92,34 @@ const KEY_REDEEM_GUIDE: ClaimGuide = {
   tip: '키는 선착순으로 소진될 수 있고, 일부 배포는 ARP 포인트가 필요합니다. 키를 받은 뒤에는 바로 등록해 두세요.',
 };
 
+const REDEEM_STEP_BY_PLATFORM: Partial<Record<PlatformFilter, string>> = {
+  steam: "받은 키는 Steam 클라이언트의 '게임 → 제품 활성화'에서 등록합니다.",
+  epic: "받은 코드는 Epic Games 런처 계정 메뉴의 '코드 사용'에서 등록합니다.",
+};
+
+function getKeyCodeGuide(platformGroup: PlatformFilter): ClaimGuide {
+  return {
+    title: '키·코드를 받아 등록하는 법',
+    steps: [
+      "아래 '0원에 줍줍하러 가기' 버튼을 눌러 배포 페이지로 이동합니다.",
+      '페이지 안내에 따라 키 또는 코드를 받습니다. (계정 로그인이 필요할 수 있어요)',
+      REDEEM_STEP_BY_PLATFORM[platformGroup] ??
+        '받은 키·코드는 해당 게임이 속한 플랫폼의 키 등록 메뉴에서 등록합니다.',
+    ],
+    tip: '키와 코드는 선착순으로 소진될 수 있으니 받은 뒤 바로 등록해 두세요.',
+  };
+}
+
+const GENERIC_GUIDE: ClaimGuide = {
+  title: '무료로 받는 법',
+  steps: [
+    "아래 '0원에 줍줍하러 가기' 버튼을 눌러 배포 페이지로 이동합니다.",
+    '배포 페이지의 안내(계정 로그인, 키 받기 등)에 따라 진행하고, 가격이 0원인지 꼭 확인합니다.',
+    '키를 받았다면 해당 게임의 플랫폼에서 등록하고, 상점에서 바로 받는 방식이라면 라이브러리에 추가됐는지 확인합니다.',
+  ],
+  tip: '배포 방식은 배포처마다 달라요. 아래 배포처 안내도 함께 확인하세요. 배포는 예고 없이 일찍 끝날 수 있습니다.',
+};
+
 export function getGuideForGame(
   game: Pick<GiveawayGame, 'platforms' | 'title' | 'instructions'>,
   platformGroup: PlatformFilter,
@@ -101,5 +129,12 @@ export function getGuideForGame(
   if (device === 'mobile') return MOBILE_GUIDE;
   if (device === 'vr') return VR_GUIDE;
   if (getAccessNotice(game)?.keyRedeem) return KEY_REDEEM_GUIDE;
+  if (/\b(keys?|codes?)\s+giveaway/i.test(game.title)) {
+    return withTypeNote(getKeyCodeGuide(platformGroup), giveawayType);
+  }
+  const isKnownIndie = /itch|indiegala/i.test(`${game.platforms} ${game.title}`);
+  if (platformGroup === 'indie' && !isKnownIndie) {
+    return withTypeNote(GENERIC_GUIDE, giveawayType);
+  }
   return getClaimGuide(platformGroup, giveawayType);
 }
