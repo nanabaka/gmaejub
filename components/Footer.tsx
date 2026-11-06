@@ -54,6 +54,26 @@ export const Footer: React.FC = () => {
             <p className="text-xs text-gray-500 leading-relaxed">
               겜줍(GameJub)은 독립 정보 제공 서비스이며, Valve Corporation(Steam), Epic Games, CD PROJEKT(GOG), Itch.io 등 각 플랫폼사와 공식 제휴 관계가 없습니다. 모든 상표 및 게임 저작권은 해당 권리자에게 있습니다.
             </p>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              무료 배포 정보 출처:{' '}
+              <a
+                href="https://www.gamerpower.com"
+                target="_blank"
+                rel="noopener"
+                className="font-medium text-gray-700 hover:text-black underline underline-offset-2"
+              >
+                GamerPower.com
+              </a>
+              {' · '}할인 정보 출처:{' '}
+              <a
+                href="https://www.cheapshark.com"
+                target="_blank"
+                rel="noopener"
+                className="font-medium text-gray-700 hover:text-black underline underline-offset-2"
+              >
+                CheapShark
+              </a>
+            </p>
           </div>
         </div>
 
