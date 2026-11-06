@@ -6,9 +6,15 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GameCard } from '@/components/GameCard';
 import { fetchExchangeRate, fetchGiveaways } from '@/utils/gameData';
-import { getPlatformBadge, normalizeGiveawayType } from '@/utils/formatters';
-import { PLATFORM_HUBS, getClaimGuide, getPlatformHub } from '@/utils/platformGuides';
+import { calculateDDay, getPlatformBadge, normalizeGiveawayType } from '@/utils/formatters';
+import {
+  PLATFORM_HUBS,
+  getClaimGuide,
+  getPlatformHub,
+  type PlatformHub,
+} from '@/utils/platformGuides';
 import { getDeviceKind } from '@/utils/claimInfo';
+import type { GiveawayGame } from '@/types/game';
 
 interface PageProps {
   params: Promise<{ platform: string }>;
@@ -20,20 +26,67 @@ export function generateStaticParams() {
   return PLATFORM_HUBS.map((hub) => ({ platform: hub.slug }));
 }
 
+function getHubGames(allGames: GiveawayGame[], hub: PlatformHub): GiveawayGame[] {
+  return allGames
+    .filter(
+      (g) =>
+        getDeviceKind(g.platforms) === 'pc' &&
+        getPlatformBadge(g.platforms).platformGroup === hub.group
+    )
+    .sort((a, b) => {
+      const aIsGame = normalizeGiveawayType(a.type) === 'game' ? 0 : 1;
+      const bIsGame = normalizeGiveawayType(b.type) === 'game' ? 0 : 1;
+      return aIsGame - bIsGame || b.id - a.id;
+    });
+}
+
+function countFullGames(games: GiveawayGame[]): number {
+  return games.filter((g) => normalizeGiveawayType(g.type) === 'game').length;
+}
+
+function buildHubTitle(hub: PlatformHub, games: GiveawayGame[]): string {
+  const fullGames = countFullGames(games);
+  if (games.length === 0 || (hub.titleWithCount.includes('{g}') && fullGames === 0)) {
+    return hub.titleEmpty;
+  }
+  return hub.titleWithCount.replace('{n}', String(games.length)).replace('{g}', String(fullGames));
+}
+
+function buildHubDescription(hub: PlatformHub, games: GiveawayGame[]): string {
+  if (games.length === 0) return hub.description;
+  const fullGames = countFullGames(games);
+  const composition =
+    fullGames < games.length
+      ? `${hub.name} 무료 배포 ${games.length}개(게임 ${fullGames}개, 나머지는 DLC·아이템·베타)를 모았습니다.`
+      : `${hub.name} 무료 게임 ${games.length}개를 모았습니다.`;
+  const soonest = games
+    .map((g) => calculateDDay(g.end_date))
+    .filter((d) => d.rawDiffMs > 0 && Number.isFinite(d.rawDiffMs))
+    .sort((a, b) => a.rawDiffMs - b.rawDiffMs)[0];
+  const deadline = soonest ? ` 가장 빨리 끝나는 배포는 ${soonest.label}입니다.` : '';
+  return `${composition}${deadline} 정가(원화 환산)와 마감일, 받는 방법까지 한눈에 확인하세요.`;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { platform } = await params;
   const hub = getPlatformHub(platform);
   if (!hub) return {};
 
+  let games: GiveawayGame[] = [];
+  try {
+    games = getHubGames(await fetchGiveaways(), hub);
+  } catch {
+    // 원본 API 실패 시 개수 없는 기본 제목/설명 사용
+  }
+
+  const title = buildHubTitle(hub, games);
+  const description = buildHubDescription(hub, games);
+
   return {
-    title: `${hub.title} - 겜줍 (GameJub)`,
-    description: hub.description,
+    title,
+    description,
     alternates: { canonical: `/free/${hub.slug}` },
-    openGraph: {
-      title: hub.title,
-      description: hub.description,
-      type: 'website',
-    },
+    openGraph: { title, description, type: 'website' },
   };
 }
 
@@ -49,17 +102,7 @@ export default async function PlatformHubPage({ params }: PageProps) {
   const allGames = giveawaysResult.status === 'fulfilled' ? giveawaysResult.value : [];
   const exchangeRate = rateResult.status === 'fulfilled' ? rateResult.value : undefined;
 
-  const games = allGames
-    .filter(
-      (g) =>
-        getDeviceKind(g.platforms) === 'pc' &&
-        getPlatformBadge(g.platforms).platformGroup === hub.group
-    )
-    .sort((a, b) => {
-      const aIsGame = normalizeGiveawayType(a.type) === 'game' ? 0 : 1;
-      const bIsGame = normalizeGiveawayType(b.type) === 'game' ? 0 : 1;
-      return aIsGame - bIsGame || b.id - a.id;
-    });
+  const games = getHubGames(allGames, hub);
 
   const guide = getClaimGuide(hub.group, 'game');
   const otherHubs = PLATFORM_HUBS.filter((h) => h.slug !== hub.slug);

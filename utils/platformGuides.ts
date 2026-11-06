@@ -58,7 +58,8 @@ export interface PlatformHub {
   slug: string;
   group: Exclude<PlatformFilter, 'all'>;
   name: string;
-  title: string;
+  titleWithCount: string;
+  titleEmpty: string;
   description: string;
   intro: string[];
 }
@@ -68,7 +69,8 @@ export const PLATFORM_HUBS: PlatformHub[] = [
     slug: 'epic',
     group: 'epic',
     name: '에픽게임즈',
-    title: '에픽게임즈 무료 게임 모음 - 이번 주 0원 배포 (Epic Games Free)',
+    titleWithCount: '에픽게임즈 이번주 무료게임 {g}개 · 무료 배포 마감일 | 겜줍',
+    titleEmpty: '에픽게임즈 무료 배포 · 이번주 무료게임 정리 | 겜줍',
     description:
       '에픽게임즈 스토어에서 지금 무료로 받을 수 있는 게임을 한곳에 모았습니다. 마감일과 정가(원화 환산), 받는 방법까지 확인하세요.',
     intro: [
@@ -80,7 +82,8 @@ export const PLATFORM_HUBS: PlatformHub[] = [
     slug: 'steam',
     group: 'steam',
     name: 'Steam',
-    title: '스팀 무료 게임 모음 - 지금 0원 배포 중인 게임 (Steam Free)',
+    titleWithCount: '스팀 무료 배포 {n}개 · 게임·DLC 마감일 정리 | 겜줍',
+    titleEmpty: '스팀 무료 배포 · 무료게임 모음 | 겜줍',
     description:
       'Steam에서 기간 한정으로 무료 배포 중인 게임과 DLC를 모았습니다. 마감일, 정가, 라이브러리에 등록하는 방법을 한눈에 확인하세요.',
     intro: [
@@ -92,7 +95,8 @@ export const PLATFORM_HUBS: PlatformHub[] = [
     slug: 'gog',
     group: 'gog',
     name: 'GOG',
-    title: 'GOG 무료 게임 모음 - 지금 0원 배포 중인 게임 (GOG Free)',
+    titleWithCount: 'GOG 무료게임 {g}개 · 무료 배포 정보 | 겜줍',
+    titleEmpty: 'GOG 무료게임 · 무료 배포 정보 | 겜줍',
     description:
       'GOG에서 기간 한정으로 무료 배포 중인 게임을 모았습니다. DRM-free 게임을 0원에 받는 방법과 마감일을 확인하세요.',
     intro: [
@@ -104,7 +108,8 @@ export const PLATFORM_HUBS: PlatformHub[] = [
     slug: 'indie',
     group: 'indie',
     name: '인디 스토어',
-    title: 'Itch.io · 인디 게임 무료 배포 모음 - 지금 0원으로 받기',
+    titleWithCount: '인디 게임 무료 배포 {g}개 · Itch.io 무료게임 | 겜줍',
+    titleEmpty: '인디 게임 무료 배포 · Itch.io 무료게임 | 겜줍',
     description:
       'Itch.io, IndieGala 등 인디 스토어에서 무료로 배포 중인 게임을 모았습니다. 배포처별 받는 방법과 마감일을 확인하세요.',
     intro: [
