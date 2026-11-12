@@ -5,8 +5,17 @@ import { ArrowLeft, CheckCircle2, Lightbulb, Gamepad2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GameCard } from '@/components/GameCard';
-import { fetchExchangeRate, fetchGiveaways } from '@/utils/gameData';
-import { calculateDDay, getPlatformBadge, normalizeGiveawayType } from '@/utils/formatters';
+import { fetchExchangeRate, fetchGiveaways, fetchRecentEnded } from '@/utils/gameData';
+import {
+  calculateDDay,
+  cleanGameTitle,
+  formatKoreanDate,
+  getGameSlug,
+  getPlatformBadge,
+  isArchivableEnded,
+  normalizeGiveawayType,
+  parseEndDate,
+} from '@/utils/formatters';
 import {
   PLATFORM_HUBS,
   getClaimGuide,
@@ -104,6 +113,19 @@ export default async function PlatformHubPage({ params }: PageProps) {
 
   const games = getHubGames(allGames, hub);
 
+  const recentEnded = (await fetchRecentEnded(allGames))
+    .filter(
+      (g) =>
+        isArchivableEnded(g) &&
+        getDeviceKind(g.platforms) === 'pc' &&
+        getPlatformBadge(g.platforms).platformGroup === hub.group
+    )
+    .sort(
+      (a, b) =>
+        (parseEndDate(b.end_date)?.getTime() ?? 0) - (parseEndDate(a.end_date)?.getTime() ?? 0)
+    )
+    .slice(0, 8);
+
   const guide = getClaimGuide(hub.group, 'game');
   const otherHubs = PLATFORM_HUBS.filter((h) => h.slug !== hub.slug);
 
@@ -151,6 +173,37 @@ export default async function PlatformHubPage({ params }: PageProps) {
               새 배포가 올라오면 이 페이지에 자동으로 표시됩니다. 아래에서 다른 플랫폼의 무료 게임을 확인해 보세요.
             </p>
           </div>
+        )}
+
+        {recentEnded.length > 0 && (
+          <section className="max-w-3xl mb-12">
+            <h2 className="text-lg font-bold text-gray-900 mb-1">
+              최근 종료된 {hub.name} 무료 게임
+            </h2>
+            <p className="text-xs text-gray-500 mb-4">
+              지난 몇 주 사이 배포가 끝난 게임입니다. 놓쳤더라도 다시 풀릴 수 있어요.
+            </p>
+            <ul className="divide-y divide-gray-100 bg-white border border-gray-200 rounded-xl shadow-xs">
+              {recentEnded.map((g) => {
+                const end = parseEndDate(g.end_date);
+                return (
+                  <li key={g.id}>
+                    <Link
+                      href={`/game/${getGameSlug(g)}`}
+                      className="flex items-center justify-between gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="font-medium text-gray-900 line-clamp-1">
+                        {cleanGameTitle(g.title)}
+                      </span>
+                      <span className="shrink-0 text-xs text-gray-400">
+                        {end ? `${formatKoreanDate(end)} 종료` : '종료'}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         )}
 
         <section className="max-w-3xl bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-xs mb-10">

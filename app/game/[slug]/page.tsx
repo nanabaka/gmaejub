@@ -6,16 +6,20 @@ import { ArrowLeft, ExternalLink, Clock, AlertTriangle, CheckCircle2, Lightbulb 
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AdBanner } from '@/components/AdBanner';
-import { fetchGiveaways } from '@/utils/gameData';
+import { fetchGiveawayById, fetchGiveaways } from '@/utils/gameData';
+import { EndedGame } from './EndedGame';
 import {
   calculateDDay,
   cleanGameTitle,
+  formatKoreanDate,
   getPlatformBadge,
   getGiveawayTypeBadge,
   normalizeGiveawayType,
   parseWorthToUsd,
   formatKrw,
   getGameSlug,
+  isArchivableEnded,
+  parseEndDate,
   parseGameIdFromSlug,
 } from '@/utils/formatters';
 import { PLATFORM_HUBS, inferHubPathFromSlug } from '@/utils/platformGuides';
@@ -28,17 +32,15 @@ interface PageProps {
 
 const TYPE_NOUN = { game: '게임', loot: 'DLC·아이템', beta: '베타 참가권' } as const;
 
-async function getGame(slug: string): Promise<GiveawayGame | null> {
+async function getGame(
+  slug: string
+): Promise<{ game: GiveawayGame; ended: boolean } | null> {
   const id = parseGameIdFromSlug(slug);
   if (id === null) return null;
-  const games = await fetchGiveaways();
-  return games.find((g) => g.id === id) ?? null;
-}
-
-function parseEndDate(endDate: string | undefined): Date | null {
-  if (!endDate || endDate.toUpperCase() === 'N/A') return null;
-  const d = new Date(endDate.replace(' ', 'T'));
-  return isNaN(d.getTime()) ? null : d;
+  const live = (await fetchGiveaways()).find((g) => g.id === id);
+  if (live) return { game: live, ended: false };
+  const past = await fetchGiveawayById(id);
+  return past && isArchivableEnded(past) ? { game: past, ended: true } : null;
 }
 
 export async function generateStaticParams() {
@@ -52,10 +54,32 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const game = await getGame(slug);
+  const resolved = await getGame(slug);
 
-  if (!game) {
+  if (!resolved) {
     return { title: '배포가 종료된 게임입니다 - 겜줍 (GameJub)' };
+  }
+
+  const { game, ended } = resolved;
+
+  if (ended) {
+    const endDate = parseEndDate(game.end_date);
+    const endLabel = endDate ? formatKoreanDate(endDate) : '';
+    const endedName = cleanGameTitle(game.title);
+    const endedPlatform = getPlatformBadge(game.platforms).label;
+    const endedTitle = `${endedName} ${endedPlatform} 무료 배포 종료${endLabel ? ` (${endLabel})` : ''} - 겜줍 (GameJub)`;
+    const endedDescription = `${endedName}의 ${endedPlatform} 무료 배포는 ${endLabel || '이미'} 종료되었습니다. 지금 받을 수 있는 다른 무료 게임은 겜줍에서 확인하세요.`;
+    return {
+      title: endedTitle,
+      description: endedDescription,
+      alternates: { canonical: `/game/${getGameSlug(game)}` },
+      openGraph: {
+        title: endedTitle,
+        description: endedDescription,
+        images: game.image ? [game.image] : undefined,
+        type: 'website',
+      },
+    };
   }
 
   const name = cleanGameTitle(game.title);
@@ -89,7 +113,11 @@ export default async function GameDetailPage({ params }: PageProps) {
   const game = allGames.find((g) => g.id === id);
 
   if (!game) {
-    // 이미 종료된 배포(현재 최신 id보다 작은 id)는 같은 플랫폼 허브로 보내 이탈을 줄임
+    const past = await fetchGiveawayById(id);
+    if (past && isArchivableEnded(past)) {
+      return <EndedGame game={past} liveGames={allGames} />;
+    }
+    // 보관 대상이 아닌 종료 배포(DLC·아이템, 오래된 것)는 같은 플랫폼 허브로 보내 이탈을 줄임
     const maxId = allGames.reduce((max, g) => Math.max(max, g.id), 0);
     if (allGames.length > 0 && id < maxId) {
       permanentRedirect(inferHubPathFromSlug(slug));

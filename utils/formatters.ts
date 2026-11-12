@@ -212,6 +212,30 @@ export function filterGamesByType(
   return games.filter((g) => normalizeGiveawayType(g.type) === typeFilter);
 }
 
+export const ARCHIVE_MAX_AGE_DAYS = 180;
+
+export function parseEndDate(endDate: string | undefined): Date | null {
+  if (!endDate || endDate.toUpperCase() === 'N/A') return null;
+  const d = new Date(endDate.replace(' ', 'T'));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * 종료 페이지로 보여줄 가치가 있는지: 종료된 본편 게임이고, 종료 후 일정 기간 이내
+ */
+export function isArchivableEnded(game: GiveawayGame, now: number = Date.now()): boolean {
+  if ((game.status || '').toLowerCase() !== 'expired') return false;
+  if (normalizeGiveawayType(game.type) !== 'game') return false;
+  const end = parseEndDate(game.end_date);
+  if (!end) return false;
+  const ageDays = (now - end.getTime()) / (1000 * 60 * 60 * 24);
+  return ageDays >= 0 && ageDays <= ARCHIVE_MAX_AGE_DAYS;
+}
+
+export function formatKoreanDate(date: Date): string {
+  return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
 /**
  * 원본 제목의 "(Steam) Giveaway", "Key Giveaway" 같은 꼬리표를 떼고 게임 이름만 남김
  */
